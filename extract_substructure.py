@@ -1,7 +1,14 @@
 """Extract the atoms in a chain of a PDB file."""
 import argparse
+import logging
 import os
 import re
+
+import tqdm
+
+
+logging.basicConfig(format='%(level)s %(asctime)s: %(message)s',
+                    datefmt='%Y-%m-%d %I:%M:%S%p')
 
 
 def parse_args(args=None):
@@ -41,12 +48,14 @@ def main(infile, outfile, chain):
     """
     lines = []
     
+    logging.info(f'Reading {infile}')
     with open(infile, 'r') as f:
         lines = list(f.readlines())
     
     if len(lines) == 0:
       raise ValueError('Empty file provided as input')
 
+    logging.info('Setting up line and data collection')
     outlines = []
     atoms = []
     field_names = {
@@ -66,8 +75,9 @@ def main(infile, outfile, chain):
     }
     last_link = -1
     terminus = False
-
-    for idx, line in enumerate(lines):
+    
+    logging.info('Parsing for chain {chain}')
+    for idx, line in enumerate(tqdm(lines)):
         fields = line.split()
 
         if fields[0] in ['DBREF', 'SEQRES', 'HET'] and fields[2] == chain:
@@ -105,7 +115,8 @@ def main(infile, outfile, chain):
             outlines.append(line)
             if fields[0] in field_names:
                 field_names[fields[0]] += 1
-    
+
+    logging.info('Creating MASTER metadata line.')
     masterline = ''.join([
         'MASTER    ',
         str(field_names['REMARK']).rjust(5, ' '),
@@ -126,8 +137,11 @@ def main(infile, outfile, chain):
     outlines.append(masterline)
     outlines.append('END   ')
 
+    logging.info(f'Writing chain {chain} to {outfile}.')
     with open(outfile, 'w') as f:
         f.write(''.join(outlines))
+
+    logging.info('Done')
     
 
 if __name__ == '__main__':
