@@ -51,11 +51,15 @@ def convert(infile, outdir, fformat='smi', delimiter=' '):
         # If 'smi', save the string to file. If 'sdf', use rdkit tools to
         # convert the string to SDF format.
         if fformat == 'smi':
-            with open(os.path.join(outdir, f'{name}', 'structure.smi')) as f:
+            outfile = os.path.join(outdir, f'{name}', 'structure.smi')
+            os.makedirs(os.path.dirname(outfile), exist_ok=True)
+            with open(outfile) as f:
                 f.write(smiles)
         elif fformat == 'sdf':
+            outfile = os.path.join(outdir, f'{name}', 'structure.sdf')
+            os.makedirs(os.path.dirname(outfile), exist_ok=True)
             mol = Chem.MolFromSmiles(smiles)
-            writer = Chem.SDWriter(os.path.join(outdir, f'{name}', 'structure.sdf'))
+            writer = Chem.SDWriter(outfile)
             writer.write(mol)
 
 
